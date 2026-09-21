@@ -53,7 +53,9 @@
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .full {
@@ -74,6 +76,60 @@
             font-family: inherit;
             font-size: 15px;
             line-height: 1.5;
+        }
+
+        /*
+         * Контейнер результата.
+         *
+         * В нём можно подсвечивать отдельные
+         * части текста, в отличие от textarea.
+         */
+        .result-wrapper {
+            position: relative;
+        }
+
+        .result-text {
+            width: 100%;
+            min-height: 280px;
+
+            padding: 12px;
+
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+
+            background: white;
+
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.5;
+
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: normal;
+
+            overflow-y: auto;
+        }
+
+        /*
+         * Подсветка заменённого текста.
+         */
+        .replacement {
+            display: inline;
+            background: #bbf7d0;
+            border-radius: 4px;
+
+            padding: 1px 3px;
+
+            cursor: help;
+            white-space: normal;
+        }
+
+        /*
+         * При наведении подсветка становится
+         * немного заметнее.
+         */
+        .replacement:hover {
+            background: #86efac;
         }
 
         input {
@@ -156,19 +212,56 @@
 
         .status {
             margin-top: 10px;
+
             color: #059669;
+
             font-size: 14px;
+
             min-height: 20px;
         }
 
         .direction {
             color: #6b7280;
+
             margin-top: -10px;
             margin-bottom: 15px;
+
             font-size: 14px;
         }
 
+        /*
+         * Легенда.
+         */
+        .legend {
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            margin-top: 10px;
+
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+
+            border-radius: 3px;
+
+            background: #bbf7d0;
+        }
+
+        /*
+         * Сообщение, когда результата ещё нет.
+         */
+        .placeholder {
+            color: #9ca3af;
+        }
+
         @media (max-width: 800px) {
+
             body {
                 padding: 15px;
             }
@@ -231,6 +324,10 @@
         </div>
 
 
+        <!-- ================================================= -->
+        <!-- РЕЗУЛЬТАТ ПРЯМОГО ПРЕОБРАЗОВАНИЯ -->
+        <!-- ================================================= -->
+
         <div class="card">
 
             <h2>Результат</h2>
@@ -239,15 +336,29 @@
                 Результат прямого преобразования
             </div>
 
-            <textarea
-                id="resultText"
-                readonly
-                placeholder="Здесь появится результат..."
-            ></textarea>
+            <div class="result-wrapper">
+
+                <div
+                    id="resultText"
+                    class="result-text"
+                >
+                    <span class="placeholder">
+                        Здесь появится результат...
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="legend">
+                <span class="legend-color"></span>
+                <span>
+                    Текст был заменён
+                </span>
+            </div>
 
             <div class="actions">
 
-                <button onclick="copyText('resultText')">
+                <button onclick="copyResult()">
                     📋 Копировать
                 </button>
 
@@ -303,6 +414,10 @@
         </div>
 
 
+        <!-- ================================================= -->
+        <!-- РЕЗУЛЬТАТ ОБРАТНОГО ПРЕОБРАЗОВАНИЯ -->
+        <!-- ================================================= -->
+
         <div class="card">
 
             <h2>Результат обратного преобразования</h2>
@@ -311,17 +426,29 @@
                 Восстановленный исходный текст
             </div>
 
-            <textarea
-                id="reverseResultText"
-                readonly
-                placeholder="Здесь появится результат..."
-            ></textarea>
+            <div class="result-wrapper">
+
+                <div
+                    id="reverseResultText"
+                    class="result-text"
+                >
+                    <span class="placeholder">
+                        Здесь появится результат...
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="legend">
+                <span class="legend-color"></span>
+                <span>
+                    Текст был восстановлен
+                </span>
+            </div>
 
             <div class="actions">
 
-                <button
-                    onclick="copyText('reverseResultText')"
-                >
+                <button onclick="copyReverseResult()">
                     📋 Копировать
                 </button>
 
@@ -373,11 +500,19 @@
 
                 <thead>
                     <tr>
-                        <th>Исходное значение</th>
-                        <th>Замена</th>
+
+                        <th>
+                            Исходное значение
+                        </th>
+
+                        <th>
+                            Замена
+                        </th>
+
                         <th style="width: 100px;">
                             Действие
                         </th>
+
                     </tr>
                 </thead>
 
@@ -397,6 +532,184 @@
 
 /*
  * ============================================================
+ * ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ
+ * ============================================================
+ *
+ * Экранируем специальные символы перед использованием
+ * строки в регулярном выражении.
+ */
+
+function escapeRegExp(text) {
+
+    return text.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
+}
+
+
+/*
+ * ============================================================
+ * СОЗДАНИЕ ПОДСВЕЧЕННОГО РЕЗУЛЬТАТА
+ * ============================================================
+ *
+ * text:
+ *     исходный текст
+ *
+ * replacements:
+ *     массив:
+ *
+ *     [
+ *         {
+ *             from: "cat",
+ *             to: "кошка"
+ *         }
+ *     ]
+ *
+ * В результате создаётся HTML, где заменённые
+ * фрагменты находятся внутри <span>.
+ */
+
+function createHighlightedResult(
+    text,
+    replacements
+) {
+
+    if (!text) {
+
+        return `
+            <span class="placeholder">
+                Здесь появится результат...
+            </span>
+        `;
+    }
+
+
+    if (!replacements.length) {
+
+        return escapeHtml(text);
+    }
+
+
+    /*
+     * Сортируем по длине.
+     *
+     * Например:
+     *
+     * "hello world"
+     * "hello"
+     *
+     * Сначала проверяем более длинное значение.
+     */
+
+    const sorted =
+        [...replacements].sort(
+            (a, b) =>
+                b.from.length - a.from.length
+        );
+
+
+    /*
+     * Создаём единое регулярное выражение.
+     */
+
+    const pattern =
+        sorted
+            .map(item =>
+                escapeRegExp(item.from)
+            )
+            .join("|");
+
+
+    const regex =
+        new RegExp(
+            `(${pattern})`,
+            "g"
+        );
+
+
+    /*
+     * Разбиваем текст на части.
+     */
+
+    const parts =
+        text.split(regex);
+
+
+    let html = "";
+
+
+    parts.forEach(part => {
+
+        /*
+         * Проверяем, является ли часть
+         * одним из заменяемых значений.
+         */
+
+        const replacement =
+            sorted.find(
+                item => item.from === part
+            );
+
+
+        if (replacement) {
+
+            /*
+             * Показываем результат замены.
+             *
+             * Исходное значение показываем
+             * во всплывающей подсказке.
+             */
+
+            html += `
+                <span
+                    class="replacement"
+                    title="Было: ${escapeAttribute(
+                        replacement.from
+                    )}"
+                >${escapeHtml(
+                    replacement.to
+                )}</span>
+            `;
+
+        } else {
+
+            html += escapeHtml(part);
+        }
+
+    });
+
+
+    return html;
+}
+
+
+/*
+ * ============================================================
+ * ЭКРАНИРОВАНИЕ HTML
+ * ============================================================
+ */
+
+function escapeHtml(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+
+function escapeAttribute(text) {
+
+    return escapeHtml(text)
+        .replace(/"/g, "&quot;");
+}
+
+
+/*
+ * ============================================================
  * ПРЯМОЕ ПРЕОБРАЗОВАНИЕ
  * ============================================================
  */
@@ -404,23 +717,74 @@
 async function replaceText() {
 
     const text =
-        document.getElementById("sourceText").value;
+        document.getElementById(
+            "sourceText"
+        ).value;
 
-    const response = await fetch("/replace", {
-        method: "POST",
 
-        headers: {
-            "Content-Type": "application/json"
-        },
+    /*
+     * Получаем обычный результат
+     * от Python.
+     */
 
-        body: JSON.stringify({
-            text: text
-        })
-    });
+    const response =
+        await fetch("/replace", {
 
-    const data = await response.json();
+            method: "POST",
 
-    document.getElementById("resultText").value =
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+
+            body: JSON.stringify({
+                text: text
+            })
+        });
+
+
+    const data =
+        await response.json();
+
+
+    /*
+     * Строим подсвеченный результат
+     * на основании текущего словаря.
+     */
+
+    const dictionary =
+        await getDictionary();
+
+
+    const replacements =
+        Object.entries(dictionary)
+            .map(([from, to]) => ({
+                from: from,
+                to: to
+            }))
+            .filter(
+                item =>
+                    item.from !== ""
+            );
+
+
+    document.getElementById(
+        "resultText"
+    ).innerHTML =
+        createHighlightedResult(
+            text,
+            replacements
+        );
+
+
+    /*
+     * Сохраняем настоящий текст результата
+     * для копирования.
+     */
+
+    document.getElementById(
+        "resultText"
+    ).dataset.plainText =
         data.result;
 }
 
@@ -438,26 +802,83 @@ async function reverseText() {
             "reverseSourceText"
         ).value;
 
-    const response = await fetch(
-        "/replace/reverse",
-        {
-            method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+    const response =
+        await fetch(
+            "/replace/reverse",
+            {
+                method: "POST",
 
-            body: JSON.stringify({
-                text: text
-            })
-        }
-    );
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-    const data = await response.json();
+                body: JSON.stringify({
+                    text: text
+                })
+            }
+        );
+
+
+    const data =
+        await response.json();
+
+
+    const dictionary =
+        await getDictionary();
+
+
+    /*
+     * Для обратного преобразования
+     * меняем местами from и to.
+     */
+
+    const replacements =
+        Object.entries(dictionary)
+            .map(([from, to]) => ({
+                from: to,
+                to: from
+            }))
+            .filter(
+                item =>
+                    item.from !== ""
+            );
+
 
     document.getElementById(
         "reverseResultText"
-    ).value = data.result;
+    ).innerHTML =
+        createHighlightedResult(
+            text,
+            replacements
+        );
+
+
+    /*
+     * Сохраняем чистый результат
+     * для копирования.
+     */
+
+    document.getElementById(
+        "reverseResultText"
+    ).dataset.plainText =
+        data.result;
+}
+
+
+/*
+ * ============================================================
+ * ПОЛУЧЕНИЕ СЛОВАРЯ
+ * ============================================================
+ */
+
+async function getDictionary() {
+
+    const response =
+        await fetch("/dictionary");
+
+    return await response.json();
 }
 
 
@@ -470,46 +891,92 @@ async function reverseText() {
 async function addReplacement() {
 
     const oldWord =
-        document.getElementById("oldWord").value;
+        document.getElementById(
+            "oldWord"
+        ).value;
 
     const newWord =
-        document.getElementById("newWord").value;
+        document.getElementById(
+            "newWord"
+        ).value;
+
 
     if (!oldWord) {
-        alert("Введите значение для замены");
+
+        alert(
+            "Введите значение для замены"
+        );
+
         return;
     }
 
-    const response = await fetch(
-        "/dictionary/add",
-        {
-            method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+    const response =
+        await fetch(
+            "/dictionary/add",
+            {
+                method: "POST",
 
-            body: JSON.stringify({
-                old: oldWord,
-                new: newWord
-            })
-        }
-    );
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-    const data = await response.json();
+                body: JSON.stringify({
+                    old: oldWord,
+                    new: newWord
+                })
+            }
+        );
+
+
+    const data =
+        await response.json();
+
 
     if (!data.success) {
+
         alert(data.error);
+
         return;
     }
 
-    document.getElementById("oldWord").value = "";
-    document.getElementById("newWord").value = "";
 
-    renderDictionary(data.dictionary);
+    document.getElementById(
+        "oldWord"
+    ).value = "";
 
-    replaceText();
-    reverseText();
+    document.getElementById(
+        "newWord"
+    ).value = "";
+
+
+    renderDictionary(
+        data.dictionary
+    );
+
+
+    /*
+     * Обновляем оба результата,
+     * если там уже был текст.
+     */
+
+    if (
+        document.getElementById(
+            "sourceText"
+        ).value
+    ) {
+        replaceText();
+    }
+
+
+    if (
+        document.getElementById(
+            "reverseSourceText"
+        ).value
+    ) {
+        reverseText();
+    }
 }
 
 
@@ -519,29 +986,68 @@ async function addReplacement() {
  * ============================================================
  */
 
-async function deleteReplacement(oldWord) {
+async function deleteReplacement(
+    oldWord
+) {
 
-    const response = await fetch(
-        "/dictionary/delete",
-        {
-            method: "POST",
+    const response =
+        await fetch(
+            "/dictionary/delete",
+            {
+                method: "POST",
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-            body: JSON.stringify({
-                old: oldWord
-            })
-        }
+                body: JSON.stringify({
+                    old: oldWord
+                })
+            }
+        );
+
+
+    const data =
+        await response.json();
+
+
+    if (!data.success) {
+
+        alert(
+            data.error ||
+            "Не удалось удалить запись"
+        );
+
+        return;
+    }
+
+
+    renderDictionary(
+        data.dictionary
     );
 
-    const data = await response.json();
 
-    renderDictionary(data.dictionary);
+    /*
+     * Пересчитываем результаты.
+     */
 
-    replaceText();
-    reverseText();
+    if (
+        document.getElementById(
+            "sourceText"
+        ).value
+    ) {
+        replaceText();
+    }
+
+
+    if (
+        document.getElementById(
+            "reverseSourceText"
+        ).value
+    ) {
+        reverseText();
+    }
 }
 
 
@@ -551,46 +1057,68 @@ async function deleteReplacement(oldWord) {
  * ============================================================
  */
 
-function renderDictionary(dictionary) {
+function renderDictionary(
+    dictionary
+) {
 
     const body =
-        document.getElementById("dictionaryBody");
+        document.getElementById(
+            "dictionaryBody"
+        );
+
 
     body.innerHTML = "";
+
 
     Object.entries(dictionary).forEach(
         ([oldWord, newWord]) => {
 
             const row =
-                document.createElement("tr");
+                document.createElement(
+                    "tr"
+                );
 
-            // Исходное значение
+
             const oldCell =
-                document.createElement("td");
+                document.createElement(
+                    "td"
+                );
 
-            oldCell.textContent = oldWord;
+            oldCell.textContent =
+                oldWord;
 
 
-            // Новое значение
             const newCell =
-                document.createElement("td");
+                document.createElement(
+                    "td"
+                );
 
-            newCell.textContent = newWord;
+            newCell.textContent =
+                newWord;
 
 
-            // Кнопка удаления
             const actionCell =
-                document.createElement("td");
+                document.createElement(
+                    "td"
+                );
+
 
             const deleteButton =
-                document.createElement("button");
+                document.createElement(
+                    "button"
+                );
 
-            deleteButton.className = "danger";
-            deleteButton.textContent = "Удалить";
 
-            // Передаём значение безопасно,
-            // без вставки его в JavaScript-код.
-            deleteButton.dataset.old = oldWord;
+            deleteButton.className =
+                "danger";
+
+            deleteButton.textContent =
+                "Удалить";
+
+
+            deleteButton.dataset.old =
+                oldWord;
+
 
             deleteButton.addEventListener(
                 "click",
@@ -604,17 +1132,20 @@ function renderDictionary(dictionary) {
             );
 
 
-            actionCell.appendChild(deleteButton);
+            actionCell.appendChild(
+                deleteButton
+            );
+
 
             row.appendChild(oldCell);
             row.appendChild(newCell);
             row.appendChild(actionCell);
 
+
             body.appendChild(row);
         }
     );
 }
-
 
 
 /*
@@ -623,29 +1154,70 @@ function renderDictionary(dictionary) {
  * ============================================================
  */
 
-async function copyText(elementId) {
+async function copyResult() {
+
+    const element =
+        document.getElementById(
+            "resultText"
+        );
+
 
     const text =
-        document.getElementById(elementId).value;
+        element.dataset.plainText || "";
 
-    await navigator.clipboard.writeText(text);
 
-    let statusId;
+    await navigator.clipboard.writeText(
+        text
+    );
 
-    if (elementId === "resultText") {
-        statusId = "statusForward";
-    } else {
-        statusId = "statusReverse";
-    }
+
+    showStatus(
+        "statusForward"
+    );
+}
+
+
+async function copyReverseResult() {
+
+    const element =
+        document.getElementById(
+            "reverseResultText"
+        );
+
+
+    const text =
+        element.dataset.plainText || "";
+
+
+    await navigator.clipboard.writeText(
+        text
+    );
+
+
+    showStatus(
+        "statusReverse"
+    );
+}
+
+
+function showStatus(
+    elementId
+) {
 
     const status =
-        document.getElementById(statusId);
+        document.getElementById(
+            elementId
+        );
+
 
     status.textContent =
         "✓ Скопировано в буфер обмена";
 
+
     setTimeout(() => {
+
         status.textContent = "";
+
     }, 2000);
 }
 
@@ -657,26 +1229,80 @@ async function copyText(elementId) {
  */
 
 function clearSource() {
-    document.getElementById("sourceText").value = "";
+
+    document.getElementById(
+        "sourceText"
+    ).value = "";
+
+
+    document.getElementById(
+        "resultText"
+    ).innerHTML = `
+        <span class="placeholder">
+            Здесь появится результат...
+        </span>
+    `;
+
+
+    document.getElementById(
+        "resultText"
+    ).dataset.plainText = "";
 }
 
 
 function clearResult() {
-    document.getElementById("resultText").value = "";
+
+    document.getElementById(
+        "resultText"
+    ).innerHTML = `
+        <span class="placeholder">
+            Здесь появится результат...
+        </span>
+    `;
+
+
+    document.getElementById(
+        "resultText"
+    ).dataset.plainText = "";
 }
 
 
 function clearReverseSource() {
+
     document.getElementById(
         "reverseSourceText"
     ).value = "";
+
+
+    document.getElementById(
+        "reverseResultText"
+    ).innerHTML = `
+        <span class="placeholder">
+            Здесь появится результат...
+        </span>
+    `;
+
+
+    document.getElementById(
+        "reverseResultText"
+    ).dataset.plainText = "";
 }
 
 
 function clearReverseResult() {
+
     document.getElementById(
         "reverseResultText"
-    ).value = "";
+    ).innerHTML = `
+        <span class="placeholder">
+            Здесь появится результат...
+        </span>
+    `;
+
+
+    document.getElementById(
+        "reverseResultText"
+    ).dataset.plainText = "";
 }
 
 
@@ -688,13 +1314,13 @@ function clearReverseResult() {
 
 async function init() {
 
-    const response =
-        await fetch("/dictionary");
-
     const dictionary =
-        await response.json();
+        await getDictionary();
 
-    renderDictionary(dictionary);
+
+    renderDictionary(
+        dictionary
+    );
 }
 
 
