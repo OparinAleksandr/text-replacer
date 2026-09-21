@@ -8,7 +8,16 @@ from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DICTIONARY_FILE = "/app/data/dictionary.json"
+
+dictionary_file = os.getenv("DICTIONARY_FILE")
+
+if dictionary_file:
+    if os.path.isabs(dictionary_file):
+        DICTIONARY_FILE = dictionary_file
+    else:
+        DICTIONARY_FILE = os.path.join(BASE_DIR, dictionary_file)
+else:
+    DICTIONARY_FILE = os.path.join(BASE_DIR, "data/dictionary.json")
 
 
 def load_dictionary():
