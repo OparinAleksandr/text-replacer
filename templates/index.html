@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Замена текста</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 280px;
+
+            padding: 12px;
+
+            resize: vertical;
+
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 10px 12px;
+
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+
+            font-size: 14px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 7px;
+
+            padding: 10px 16px;
+
+            background: #2563eb;
+            color: white;
+
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button.secondary {
+            background: #6b7280;
+        }
+
+        button.secondary:hover {
+            background: #4b5563;
+        }
+
+        button.danger {
+            background: #dc2626;
+            padding: 6px 10px;
+        }
+
+        button.danger:hover {
+            background: #b91c1c;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .dictionary-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+
+            margin-bottom: 20px;
+        }
+
+        .dictionary {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .dictionary th,
+        .dictionary td {
+            padding: 10px;
+
+            border-bottom: 1px solid #e5e7eb;
+
+            text-align: left;
+        }
+
+        .dictionary th {
+            background: #f9fafb;
+        }
+
+        .status {
+            margin-top: 10px;
+            color: #059669;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .direction {
+            color: #6b7280;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                padding: 15px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full {
+                grid-column: auto;
+            }
+
+            .dictionary-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Замена текста</h1>
+
+    <div class="grid">
+
+        <!-- ================================================= -->
+        <!-- ПРЯМОЕ ПРЕОБРАЗОВАНИЕ -->
+        <!-- ================================================= -->
+
+        <div class="card">
+
+            <h2>Прямое преобразование</h2>
+
+            <div class="direction">
+                Исходное значение → значение из словаря
+            </div>
+
+            <textarea
+                id="sourceText"
+                placeholder="Введите или вставьте исходный текст..."
+            ></textarea>
+
+            <div class="actions">
+
+                <button onclick="replaceText()">
+                    Заменить текст →
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="clearSource()"
+                >
+                    Очистить
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>Результат</h2>
+
+            <div class="direction">
+                Результат прямого преобразования
+            </div>
+
+            <textarea
+                id="resultText"
+                readonly
+                placeholder="Здесь появится результат..."
+            ></textarea>
+
+            <div class="actions">
+
+                <button onclick="copyText('resultText')">
+                    📋 Копировать
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="clearResult()"
+                >
+                    Очистить
+                </button>
+
+            </div>
+
+            <div
+                id="statusForward"
+                class="status"
+            ></div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- ОБРАТНОЕ ПРЕОБРАЗОВАНИЕ -->
+        <!-- ================================================= -->
+
+        <div class="card">
+
+            <h2>Обратное преобразование</h2>
+
+            <div class="direction">
+                Значение из словаря → исходное значение
+            </div>
+
+            <textarea
+                id="reverseSourceText"
+                placeholder="Введите текст для обратного преобразования..."
+            ></textarea>
+
+            <div class="actions">
+
+                <button onclick="reverseText()">
+                    ← Преобразовать обратно
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="clearReverseSource()"
+                >
+                    Очистить
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>Результат обратного преобразования</h2>
+
+            <div class="direction">
+                Восстановленный исходный текст
+            </div>
+
+            <textarea
+                id="reverseResultText"
+                readonly
+                placeholder="Здесь появится результат..."
+            ></textarea>
+
+            <div class="actions">
+
+                <button
+                    onclick="copyText('reverseResultText')"
+                >
+                    📋 Копировать
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="clearReverseResult()"
+                >
+                    Очистить
+                </button>
+
+            </div>
+
+            <div
+                id="statusReverse"
+                class="status"
+            ></div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- СЛОВАРЬ -->
+        <!-- ================================================= -->
+
+        <div class="card full">
+
+            <h2>Словарь замен</h2>
+
+            <div class="dictionary-form">
+
+                <input
+                    id="oldWord"
+                    placeholder="Что заменить"
+                >
+
+                <input
+                    id="newWord"
+                    placeholder="На что заменить"
+                >
+
+                <button onclick="addReplacement()">
+                    Добавить
+                </button>
+
+            </div>
+
+
+            <table class="dictionary">
+
+                <thead>
+                    <tr>
+                        <th>Исходное значение</th>
+                        <th>Замена</th>
+                        <th style="width: 100px;">
+                            Действие
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody id="dictionaryBody">
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/*
+ * ============================================================
+ * ПРЯМОЕ ПРЕОБРАЗОВАНИЕ
+ * ============================================================
+ */
+
+async function replaceText() {
+
+    const text =
+        document.getElementById("sourceText").value;
+
+    const response = await fetch("/replace", {
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            text: text
+        })
+    });
+
+    const data = await response.json();
+
+    document.getElementById("resultText").value =
+        data.result;
+}
+
+
+/*
+ * ============================================================
+ * ОБРАТНОЕ ПРЕОБРАЗОВАНИЕ
+ * ============================================================
+ */
+
+async function reverseText() {
+
+    const text =
+        document.getElementById(
+            "reverseSourceText"
+        ).value;
+
+    const response = await fetch(
+        "/replace/reverse",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                text: text
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    document.getElementById(
+        "reverseResultText"
+    ).value = data.result;
+}
+
+
+/*
+ * ============================================================
+ * ДОБАВЛЕНИЕ ЗАМЕНЫ
+ * ============================================================
+ */
+
+async function addReplacement() {
+
+    const oldWord =
+        document.getElementById("oldWord").value;
+
+    const newWord =
+        document.getElementById("newWord").value;
+
+    if (!oldWord) {
+        alert("Введите значение для замены");
+        return;
+    }
+
+    const response = await fetch(
+        "/dictionary/add",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                old: oldWord,
+                new: newWord
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.error);
+        return;
+    }
+
+    document.getElementById("oldWord").value = "";
+    document.getElementById("newWord").value = "";
+
+    renderDictionary(data.dictionary);
+
+    replaceText();
+    reverseText();
+}
+
+
+/*
+ * ============================================================
+ * УДАЛЕНИЕ ЗАМЕНЫ
+ * ============================================================
+ */
+
+async function deleteReplacement(oldWord) {
+
+    const response = await fetch(
+        "/dictionary/delete",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                old: oldWord
+            })
+        }
+    );
+
+    const data = await response.json();
+
+    renderDictionary(data.dictionary);
+
+    replaceText();
+    reverseText();
+}
+
+
+/*
+ * ============================================================
+ * ОТОБРАЖЕНИЕ СЛОВАРЯ
+ * ============================================================
+ */
+
+function renderDictionary(dictionary) {
+
+    const body =
+        document.getElementById("dictionaryBody");
+
+    body.innerHTML = "";
+
+    Object.entries(dictionary).forEach(
+        ([oldWord, newWord]) => {
+
+            const row =
+                document.createElement("tr");
+
+            // Исходное значение
+            const oldCell =
+                document.createElement("td");
+
+            oldCell.textContent = oldWord;
+
+
+            // Новое значение
+            const newCell =
+                document.createElement("td");
+
+            newCell.textContent = newWord;
+
+
+            // Кнопка удаления
+            const actionCell =
+                document.createElement("td");
+
+            const deleteButton =
+                document.createElement("button");
+
+            deleteButton.className = "danger";
+            deleteButton.textContent = "Удалить";
+
+            // Передаём значение безопасно,
+            // без вставки его в JavaScript-код.
+            deleteButton.dataset.old = oldWord;
+
+            deleteButton.addEventListener(
+                "click",
+                async () => {
+
+                    await deleteReplacement(
+                        deleteButton.dataset.old
+                    );
+
+                }
+            );
+
+
+            actionCell.appendChild(deleteButton);
+
+            row.appendChild(oldCell);
+            row.appendChild(newCell);
+            row.appendChild(actionCell);
+
+            body.appendChild(row);
+        }
+    );
+}
+
+
+
+/*
+ * ============================================================
+ * КОПИРОВАНИЕ
+ * ============================================================
+ */
+
+async function copyText(elementId) {
+
+    const text =
+        document.getElementById(elementId).value;
+
+    await navigator.clipboard.writeText(text);
+
+    let statusId;
+
+    if (elementId === "resultText") {
+        statusId = "statusForward";
+    } else {
+        statusId = "statusReverse";
+    }
+
+    const status =
+        document.getElementById(statusId);
+
+    status.textContent =
+        "✓ Скопировано в буфер обмена";
+
+    setTimeout(() => {
+        status.textContent = "";
+    }, 2000);
+}
+
+
+/*
+ * ============================================================
+ * ОЧИСТКА
+ * ============================================================
+ */
+
+function clearSource() {
+    document.getElementById("sourceText").value = "";
+}
+
+
+function clearResult() {
+    document.getElementById("resultText").value = "";
+}
+
+
+function clearReverseSource() {
+    document.getElementById(
+        "reverseSourceText"
+    ).value = "";
+}
+
+
+function clearReverseResult() {
+    document.getElementById(
+        "reverseResultText"
+    ).value = "";
+}
+
+
+/*
+ * ============================================================
+ * ИНИЦИАЛИЗАЦИЯ
+ * ============================================================
+ */
+
+async function init() {
+
+    const response =
+        await fetch("/dictionary");
+
+    const dictionary =
+        await response.json();
+
+    renderDictionary(dictionary);
+}
+
+
+init();
+
+</script>
+
+</body>
+</html>
