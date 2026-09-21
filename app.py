@@ -8,7 +8,7 @@ from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DICTIONARY_FILE = os.path.join(BASE_DIR, "dictionary.json")
+DICTIONARY_FILE = "/app/data/dictionary.json"
 
 
 def load_dictionary():
@@ -136,14 +136,14 @@ def get_dictionary():
 
 
 def open_browser():
-    webbrowser.open("http://127.0.0.1:5000")
+    webbrowser.open("http://0.0.0.0:5000")
 
 
 if __name__ == "__main__":
     threading.Timer(1.0, open_browser).start()
 
     app.run(
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=5000,
         debug=False,
     )

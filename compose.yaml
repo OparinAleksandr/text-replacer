@@ -1,0 +1,11 @@
+services:
+  text-replacer:
+    build: .
+    container_name: text-replacer
+    restart: unless-stopped
+
+    ports:
+      - "5000:5000"
+
+    volumes:
+      - ./data:/app/data
