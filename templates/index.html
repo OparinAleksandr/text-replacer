@@ -278,14 +278,152 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* ============================================================
+        ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ
+        ============================================================ */
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 25px;
+        }
+
+        .top-bar h1 {
+            margin: 0;
+        }
+
+        .theme-button {
+            background: #374151;
+            color: white;
+
+            border: 1px solid #4b5563;
+
+            padding: 9px 14px;
+        }
+
+        .theme-button:hover {
+            background: #4b5563;
+        }
+
+
+        /* ============================================================
+        ТЁМНАЯ ТЕМА
+        ============================================================ */
+
+        body.dark {
+            background: #111827;
+            color: #f3f4f6;
+        }
+
+        body.dark .card {
+            background: #1f2937;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.35);
+        }
+
+        body.dark textarea {
+            background: #111827;
+            color: #f3f4f6;
+
+            border-color: #4b5563;
+        }
+
+        body.dark textarea::placeholder {
+            color: #6b7280;
+        }
+
+        body.dark .result-text {
+            background: #111827;
+            color: #f3f4f6;
+
+            border-color: #4b5563;
+        }
+
+        body.dark input {
+            background: #111827;
+            color: #f3f4f6;
+
+            border-color: #4b5563;
+        }
+
+        body.dark input::placeholder {
+            color: #6b7280;
+        }
+
+        body.dark .dictionary th {
+            background: #374151;
+            color: #f3f4f6;
+        }
+
+        body.dark .dictionary td {
+            border-color: #374151;
+        }
+
+        body.dark .direction {
+            color: #9ca3af;
+        }
+
+        body.dark .placeholder {
+            color: #6b7280;
+        }
+
+        body.dark .legend {
+            color: #9ca3af;
+        }
+
+
+        /*
+        * Подсветка замен в тёмной теме.
+        */
+
+        body.dark .replacement {
+            background: #166534;
+            color: #dcfce7;
+        }
+
+        body.dark .replacement:hover {
+            background: #15803d;
+        }
+
+
+        /*
+        * Кнопка темы в тёмном режиме.
+        */
+
+        body.dark .theme-button {
+            background: #f3f4f6;
+            color: #111827;
+
+            border-color: #d1d5db;
+        }
+
+        body.dark .theme-button:hover {
+            background: #e5e7eb;
+        }
+
+
     </style>
 </head>
 
 <body>
 
 <div class="container">
+    <div class="top-bar">
 
-    <h1>Замена текста</h1>
+        <h1>Замена текста</h1>
+
+        <button
+            id="themeButton"
+            class="theme-button"
+            onclick="toggleTheme()"
+        >
+            🌙 Тёмная тема
+        </button>
+
+    </div>
 
     <div class="grid">
 
@@ -1323,6 +1461,89 @@ async function init() {
     );
 }
 
+
+/*
+ * ============================================================
+ * ТЁМНАЯ ТЕМА
+ * ============================================================
+ */
+
+function applyTheme(theme) {
+
+    const button =
+        document.getElementById(
+            "themeButton"
+        );
+
+
+    if (theme === "dark") {
+
+        document.body.classList.add("dark");
+
+        button.textContent =
+            "☀️ Светлая тема";
+
+    } else {
+
+        document.body.classList.remove("dark");
+
+        button.textContent =
+            "🌙 Тёмная тема";
+    }
+
+
+    /*
+     * Запоминаем выбор пользователя.
+     */
+
+    localStorage.setItem(
+        "theme",
+        theme
+    );
+}
+
+
+function toggleTheme() {
+
+    const isDark =
+        document.body.classList.contains(
+            "dark"
+        );
+
+
+    applyTheme(
+        isDark
+            ? "light"
+            : "dark"
+    );
+}
+
+
+/*
+ * Загружаем сохранённую тему
+ * при открытии страницы.
+ */
+
+function initTheme() {
+
+    const savedTheme =
+        localStorage.getItem(
+            "theme"
+        );
+
+
+    if (savedTheme === "dark") {
+
+        applyTheme("dark");
+
+    } else {
+
+        applyTheme("light");
+    }
+}
+
+
+initTheme();
 
 init();
 
