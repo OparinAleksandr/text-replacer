@@ -5,3 +5,5 @@ or
 DICTIONARY_FILE=data/dictionary.json  
 pip install requirements.txt  
 python3 app.py  
+
+![alt text](image.png)
